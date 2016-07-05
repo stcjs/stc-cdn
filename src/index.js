@@ -196,7 +196,7 @@ export default class CdnPlugin extends Plugin {
       }
       let promise = tagAttrs.map(attr => {
         let value = this.stc.flkit.getHtmlAttrValue(attrs, attr);
-        if(!value){
+        if(!value || isRemoteUrl(value)){
           return;
         }
         let extname = path.extname(value);
