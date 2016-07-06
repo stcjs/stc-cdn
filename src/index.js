@@ -158,6 +158,27 @@ export default class CdnPlugin extends Plugin {
     return cacheInstances[cacheKey];
   }
   /**
+   * get cache handle
+   */
+  getCacheHandle(content){
+    if(this.config.cache === false){
+      return {
+        get: () => {},
+        set: () => {}
+      };
+    }
+    let cacheInstance = this.getCacheInstance();
+    let cacheKey = md5(content);
+    return {
+      get: () => {
+        return cacheInstance.get(cacheKey);
+      },
+      set: data => {
+        return cacheInstance.set(cacheKey, data);
+      }
+    };
+  }
+  /**
    * get cdn url
    */
   getCdnUrl(buffer, filepath){
@@ -169,16 +190,7 @@ export default class CdnPlugin extends Plugin {
     if(typeof adapter !== 'function'){
       this.fatal(`${this.contructor.name}: options.adapter must be a function`);
     }
-    let cacheInstance = this.getCacheInstance();
-    let cacheKey = md5(content);
-    return adapter(buffer, filepath, this.options, {
-      get: () => {
-        return cacheInstance.get(cacheKey);
-      },
-      set: data => {
-        return cacheInstance.set(cacheKey, data);
-      }
-    });
+    return adapter(buffer, filepath, this.options, this.getCacheHandle(content));
   }
   /**
    * parse html tag start
