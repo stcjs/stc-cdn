@@ -38,7 +38,7 @@ export default class CdnPlugin extends Plugin {
       case 'css':
         return this.parseCss();
       default:
-        let buffer = await this.getContent();
+        let buffer = await this.getContent('binary');
         return this.getCdnUrl(buffer, this.file.path);
     }
   }
@@ -309,7 +309,7 @@ export default class CdnPlugin extends Plugin {
    * use cluster
    */
   static cluster(){
-    return false;
+    return true;
   }
   /**
    * close cache
