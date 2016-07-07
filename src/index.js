@@ -38,8 +38,8 @@ export default class CdnPlugin extends Plugin {
       case 'css':
         return this.parseCss();
       default:
-        let buffer = await this.getContent('binary');
-        return this.getCdnUrl(buffer, this.file.path);
+        let content = await this.getContent('binary');
+        return this.getCdnUrl(content, this.file.path);
     }
   }
   /**
@@ -181,8 +181,7 @@ export default class CdnPlugin extends Plugin {
   /**
    * get cdn url
    */
-  getCdnUrl(buffer, filepath){
-    let content = isBuffer(buffer) ? buffer.toString() : buffer;
+  getCdnUrl(content, filepath){
     let adapter = this.options.adapter;
     if(adapter && typeof adapter.default === 'function'){
       adapter = adapter.default;
@@ -190,7 +189,7 @@ export default class CdnPlugin extends Plugin {
     if(typeof adapter !== 'function'){
       this.fatal(`${this.contructor.name}: options.adapter must be a function`);
     }
-    return adapter(buffer, filepath, this.options, this.getCacheHandle(content));
+    return adapter(content, filepath, this.options, this.getCacheHandle(content));
   }
   /**
    * parse html tag start
