@@ -28,7 +28,7 @@ export default class CdnPlugin extends Plugin {
    * run
    */
   async run(){
-    if(this.file.prop('tpl')){
+    if(this.isTpl()){
       return this.parseHtml();
     }
     let extname = this.file.extname;
