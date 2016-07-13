@@ -1,24 +1,6 @@
 import Plugin from 'stc-plugin';
-import {isRemoteUrl, isBuffer, md5} from 'stc-helper';
+import {isRemoteUrl, isBuffer, md5, ResourceRegExp, htmlTagResourceAttrs} from 'stc-helper';
 import path from 'path';
-
-/**
- * resouce attrs
- */
-const defaultResourceAttrs = {
-  img: ['src', 'srcset'],
-  script: ['src'],
-  link: ['href'],
-  param: ['value'],
-  embed: ['src'],
-  object: ['data'],
-  source: ['src', 'srcset']
-};
-
-const backgroundRegExp = /url\s*\(\s*([\'\"]?)([\w\-\/\.\@]+\.(?:png|jpg|gif|jpeg|ico|cur|webp))(?:\?[^\?\'\"\)\s]*)?\1\s*\)/ig;
-const fontRegExp = /url\s*\(\s*([\'\"]?)([^\'\"\?]+\.(?:eot|woff|woff2|ttf|svg))([^\s\)\'\"]*)\1\s*\)/ig;
-const filterRegExp = /src\s*=\s*([\'\"])?([^\'\"]+\.(?:png|jpg|gif|jpeg|ico|cur|webp))(?:\?[^\?\'\"\)\s]*)?\1\s*/ig;
-const jsStcRegexp = /\{\s*([\'\"]?)cdn\1\s*\:\s*([\'\"])([\w\/\-\.]+)\2\s*\}\.cdn/gi;
 
 /**
  * upload resource to cdn
@@ -74,7 +56,7 @@ export default class CdnPlugin extends Plugin {
    * {cdn: "path/to/resource"}.cdn
    */
   parseJsResource(content){
-    return this.asyncReplace(content, jsStcRegexp, async (a, b, c, d) => {
+    return this.asyncReplace(content, ResourceRegExp.cdn, async (a, b, c, d) => {
       let url = await this.invokeSelf(d);
       return `"${url}"`;
     });
@@ -115,7 +97,7 @@ export default class CdnPlugin extends Plugin {
   replaceCssResource(value, property){
     // ie filter
     if(property === 'filter'){
-      return this.asyncReplace(value, filterRegExp, async (a, b, p) => {
+      return this.asyncReplace(value, ResourceRegExp.filter, async (a, b, p) => {
         if(isRemoteUrl(p)){
           return `src=${b}${p}${b}`;
         }
@@ -125,7 +107,7 @@ export default class CdnPlugin extends Plugin {
     }
     // font-face
     if(property === 'src'){
-      return this.asyncReplace(value, fontRegExp, async (a, b, p, suffix) => {
+      return this.asyncReplace(value, ResourceRegExp.font, async (a, b, p, suffix) => {
         if(isRemoteUrl(p)){
           return `url(${p}${suffix})`;
         }
@@ -134,7 +116,7 @@ export default class CdnPlugin extends Plugin {
       });
     }
     // background image
-    return this.asyncReplace(value, backgroundRegExp, async (a, b, p) => {
+    return this.asyncReplace(value, ResourceRegExp.background, async (a, b, p) => {
       if(isRemoteUrl(p)){
         return `url(${p})`;
       }
@@ -195,7 +177,7 @@ export default class CdnPlugin extends Plugin {
    * parse html tag start
    */
   parseHtmlTagStart(token){
-    let list = [defaultResourceAttrs, this.options.tagAttrs || {}];
+    let list = [htmlTagResourceAttrs, this.options.tagAttrs || {}];
     let {attrs, tagLowerCase} = token.ext;
     let promises = list.map(item => {
       if(!item[tagLowerCase]){
