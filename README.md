@@ -25,7 +25,7 @@ stc.workflow({
 adapter code like this: 
 
 ```js
-export default function stcAdapter(content, filepath, cacheInstance){
+export default function stcAdapter(content, filepath, options, cacheInstance){
   let value = await cacheInstance.get();
   if(value !== undefined){
     return value;
