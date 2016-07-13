@@ -21,7 +21,8 @@ export default class CdnPlugin extends Plugin {
         return this.parseCss();
       default:
         let content = await this.getContent('binary');
-        return this.getCdnUrl(content, this.file.path);
+        let url = await this.getCdnUrl(content, this.file.path);
+        return {url};
     }
   }
   /**
@@ -40,7 +41,7 @@ export default class CdnPlugin extends Plugin {
       }
     });
     await Promise.all(promises);
-    return tokens;
+    return {ast: tokens};
   }
   /**
    * parse js
@@ -262,8 +263,8 @@ export default class CdnPlugin extends Plugin {
    * update
    */
   update(data){
-    if(this.file.prop('tpl')){
-      this.setAst(data);
+    if(this.isTpl()){
+      this.setAst(data.ast);
       return;
     }
     let extname = this.file.extname;
@@ -274,9 +275,11 @@ export default class CdnPlugin extends Plugin {
       case 'css':
         // virtual file
         if(this.file.prop('virtual')){
-          return data;
+          return data.url;
         }
         this.setAst(data.ast);
+        return data.url;
+      default:
         return data.url;
     }
   }
