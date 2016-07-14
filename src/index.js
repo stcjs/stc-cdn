@@ -58,7 +58,7 @@ export default class CdnPlugin extends Plugin {
    */
   parseJsResource(content){
     return this.asyncReplace(content, ResourceRegExp.cdn, async (a, b, c, d) => {
-      let {url} = await this.invokeSelf(d);
+      let url = await this.invokeSelf(d);
       return `"${url}"`;
     });
   }
@@ -102,7 +102,7 @@ export default class CdnPlugin extends Plugin {
         if(isRemoteUrl(p)){
           return `src=${b}${p}${b}`;
         }
-        let {url} = await this.invokeSelf(p);
+        let url = await this.invokeSelf(p);
         return `src=${b}${url}${b}`;
       });
     }
@@ -112,7 +112,7 @@ export default class CdnPlugin extends Plugin {
         if(isRemoteUrl(p)){
           return `url(${p}${suffix})`;
         }
-        let {url} = await this.invokeSelf(p);
+        let url = await this.invokeSelf(p);
         return `url(${url}${suffix})`;
       });
     }
@@ -121,7 +121,7 @@ export default class CdnPlugin extends Plugin {
       if(isRemoteUrl(p)){
         return `url(${p})`;
       }
-      let {url} = await this.invokeSelf(p);
+      let url = await this.invokeSelf(p);
       return `url(${url})`;
     });
   }
@@ -181,10 +181,7 @@ export default class CdnPlugin extends Plugin {
     let list = [htmlTagResourceAttrs, this.options.tagAttrs || {}];
     let {attrs, tagLowerCase} = token.ext;
     let promises = list.map(item => {
-      if(!item[tagLowerCase]){
-        return;
-      }
-      let tagAttrs = item[tagLowerCase];
+      let tagAttrs = item[tagLowerCase] || [];
       if(!Array.isArray(tagAttrs)){
         tagAttrs = [tagAttrs];
       }
@@ -201,7 +198,7 @@ export default class CdnPlugin extends Plugin {
             item = item.trim();
             let items = item.split(' ');
             return this.invokeSelf(items[0].trim()).then(cdnUrl => {
-              items[0] = cdnUrl.url;
+              items[0] = cdnUrl;
               return items.join(' ');
             });
           });
@@ -218,7 +215,7 @@ export default class CdnPlugin extends Plugin {
         }
 
         return this.invokeSelf(value).then(cdnUrl => {
-          this.stc.flkit.setHtmlAttrValue(attrs, attr, cdnUrl.url);
+          this.stc.flkit.setHtmlAttrValue(attrs, attr, cdnUrl);
         });
       });
 
@@ -227,7 +224,7 @@ export default class CdnPlugin extends Plugin {
       let value = this.stc.flkit.getHtmlAttrValue(attrs, 'style');
       if(value){
        stylePromise = this.replaceCssResource(value).then(value => {
-         this.set.flkit.setHtmlAttrValue(attrs, 'style', value);
+         this.stc.flkit.setHtmlAttrValue(attrs, 'style', value);
        });
       }
       return Promise.all([Promise.all(promise), stylePromise]);
@@ -255,7 +252,7 @@ export default class CdnPlugin extends Plugin {
   async parseHtmlTagStyle(token){
     let content = token.ext.content;
     let tokens = content.ext.tokens || content.value;
-    let filepath = path.join(path.dirname(this.file.path), md5(content.value) + '.css');
+    let filepath = md5(content.value) + '.css';
     let file = await this.addFile(filepath, tokens, true);
     let ret = await this.invokeSelf(file);
     content.ext.tokens = ret;
