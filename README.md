@@ -22,7 +22,7 @@ stc.workflow({
 
 ## Adapter introduction
 
-adapter code like this: 
+adapter code like this:
 
 ```js
 export default function stcAdapter(content, filepath, options, cacheInstance){
@@ -37,3 +37,5 @@ export default function stcAdapter(content, filepath, options, cacheInstance){
 ```
 
 ## Adapter list
+
+- [stc-cdn-qiniu](https://github.com/stcjs/stc-cdn-qiniu) - 七牛 Adapter
