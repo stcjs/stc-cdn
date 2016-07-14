@@ -270,7 +270,7 @@ export default class CdnPlugin extends Plugin {
    * use cluster
    */
   static cluster(){
-    return true;
+    return false;
   }
   /**
    * close cache
