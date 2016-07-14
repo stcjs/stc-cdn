@@ -58,7 +58,7 @@ export default class CdnPlugin extends Plugin {
    */
   parseJsResource(content){
     return this.asyncReplace(content, ResourceRegExp.cdn, async (a, b, c, d) => {
-      let url = await this.invokeSelf(d);
+      let {url} = await this.invokeSelf(d);
       return `"${url}"`;
     });
   }
@@ -81,7 +81,7 @@ export default class CdnPlugin extends Plugin {
       }
     });
     await Promise.all(promises);
-   
+
 
     // virtual file
     if(this.file.prop('virtual')){
@@ -102,7 +102,7 @@ export default class CdnPlugin extends Plugin {
         if(isRemoteUrl(p)){
           return `src=${b}${p}${b}`;
         }
-        let url = await this.invokeSelf(p);
+        let {url} = await this.invokeSelf(p);
         return `src=${b}${url}${b}`;
       });
     }
@@ -112,7 +112,7 @@ export default class CdnPlugin extends Plugin {
         if(isRemoteUrl(p)){
           return `url(${p}${suffix})`;
         }
-        let url = await this.invokeSelf(p);
+        let {url} = await this.invokeSelf(p);
         return `url(${url}${suffix})`;
       });
     }
@@ -121,7 +121,7 @@ export default class CdnPlugin extends Plugin {
       if(isRemoteUrl(p)){
         return `url(${p})`;
       }
-      let url = await this.invokeSelf(p);
+      let {url} = await this.invokeSelf(p);
       return `url(${url})`;
     });
   }
@@ -193,12 +193,7 @@ export default class CdnPlugin extends Plugin {
         if(!value || isRemoteUrl(value)){
           return;
         }
-        let extname = path.extname(value);
-        // check link resource extname
-        // ignore resource when has template syntax
-        if(!/^\.\w+$/.test(extname)){
-          return;
-        }
+
         // <img src="/static/img/404.jpg" srcset="/static/img/404.jpg 640w 1x, /static/img/404.jpg 2x" />
         if(attr === 'srcset'){
           let values = value.split(',');
@@ -206,18 +201,25 @@ export default class CdnPlugin extends Plugin {
             item = item.trim();
             let items = item.split(' ');
             return this.invokeSelf(items[0].trim()).then(cdnUrl => {
-              items[0] = cdnUrl;
+              items[0] = cdnUrl.url;
               return items.join(' ');
             });
           });
           return Promise.all(promises).then(ret => {
             this.stc.flkit.setHtmlAttrValue(attrs, attr, ret.join(','));
           });
-        }else{
-          return this.invokeSelf(value).then(cdnUrl => {
-            this.stc.flkit.setHtmlAttrValue(attrs, attr, cdnUrl);
-          });
         }
+
+        let extname = path.extname(value);
+        // check link resource extname
+        // ignore resource when has template syntax
+        if(!/^\.\w+$/.test(extname)){
+          return;
+        }
+
+        return this.invokeSelf(value).then(cdnUrl => {
+          this.stc.flkit.setHtmlAttrValue(attrs, attr, cdnUrl.url);
+        });
       });
 
       // replace image/font in style value
@@ -253,7 +255,7 @@ export default class CdnPlugin extends Plugin {
   async parseHtmlTagStyle(token){
     let content = token.ext.content;
     let tokens = content.ext.tokens || content.value;
-    let filepath = '/stc/' + md5(content.value) + '.css';
+    let filepath = path.join(path.dirname(this.file.path), md5(content.value) + '.css');
     let file = await this.addFile(filepath, tokens, true);
     let ret = await this.invokeSelf(file);
     content.ext.tokens = ret;
