@@ -150,12 +150,13 @@ export default class CdnPlugin extends Plugin {
   /**
    * get url by invoke plugin
    */
-  getUrlByInvoke(filepath){
+  async getUrlByInvoke(filepath){
     let {exclude} = this.options;
     if(exclude && this.stc.resource.match(filepath, exclude)){
       return Promise.resolve(filepath);
     }
-    return this.invokeSelf(filepath);
+    let data = await this.invokeSelf(filepath);
+    return data.url;
   }
   /**
    * parse html tag start
@@ -253,16 +254,10 @@ export default class CdnPlugin extends Plugin {
     switch(extname){
       case 'js':
         this.setContent(data.content);
-        return data.url;
+        break;
       case 'css':
-        // virtual file
-        if(this.file.prop('virtual')){
-          return data.url;
-        }
         this.setAst(data.ast);
-        return data.url;
-      default:
-        return data.url;
+        break;
     }
   }
   /**
