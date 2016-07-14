@@ -1,6 +1,16 @@
 import Plugin from 'stc-plugin';
-import {isRemoteUrl, isBuffer, md5, ResourceRegExp, htmlTagResourceAttrs} from 'stc-helper';
 import path from 'path';
+
+import {
+  isRemoteUrl, 
+  md5, 
+  ResourceRegExp, 
+  htmlTagResourceAttrs
+} from 'stc-helper';
+
+import {
+  getCacheHandle
+} from './helper.js';
 
 /**
  * upload resource to cdn
@@ -58,7 +68,7 @@ export default class CdnPlugin extends Plugin {
    */
   parseJsResource(content){
     return this.asyncReplace(content, ResourceRegExp.cdn, async (a, b, c, d) => {
-      let url = await this.invokeSelf(d);
+      let url = await this.getUrlByInvoke(d);
       return `"${url}"`;
     });
   }
@@ -82,7 +92,6 @@ export default class CdnPlugin extends Plugin {
     });
     await Promise.all(promises);
 
-
     // virtual file
     if(this.file.prop('virtual')){
       return tokens;
@@ -102,7 +111,7 @@ export default class CdnPlugin extends Plugin {
         if(isRemoteUrl(p)){
           return `src=${b}${p}${b}`;
         }
-        let url = await this.invokeSelf(p);
+        let url = await this.getUrlByInvoke(p);
         return `src=${b}${url}${b}`;
       });
     }
@@ -112,7 +121,7 @@ export default class CdnPlugin extends Plugin {
         if(isRemoteUrl(p)){
           return `url(${p}${suffix})`;
         }
-        let url = await this.invokeSelf(p);
+        let url = await this.getUrlByInvoke(p);
         return `url(${url}${suffix})`;
       });
     }
@@ -121,45 +130,9 @@ export default class CdnPlugin extends Plugin {
       if(isRemoteUrl(p)){
         return `url(${p})`;
       }
-      let url = await this.invokeSelf(p);
+      let url = await this.getUrlByInvoke(p);
       return `url(${url})`;
     });
-  }
-
-  /**
-   * get cache instance
-   */
-  getCacheInstance(){
-    let cacheKey = (this.config.product || 'default') + '/cdn';
-    let cacheInstances = this.stc.cacheInstances;
-    if(cacheInstances[cacheKey]){
-      return cacheInstances[cacheKey];
-    }
-    cacheInstances[cacheKey] = new this.stc.cache({
-      type: cacheKey
-    });
-    return cacheInstances[cacheKey];
-  }
-  /**
-   * get cache handle
-   */
-  getCacheHandle(content){
-    if(this.config.cache === false){
-      return {
-        get: () => {},
-        set: () => {}
-      };
-    }
-    let cacheInstance = this.getCacheInstance();
-    let cacheKey = md5(content);
-    return {
-      get: () => {
-        return cacheInstance.get(cacheKey);
-      },
-      set: data => {
-        return cacheInstance.set(cacheKey, data);
-      }
-    };
   }
   /**
    * get cdn url
@@ -172,7 +145,17 @@ export default class CdnPlugin extends Plugin {
     if(typeof adapter !== 'function'){
       this.fatal(`${this.contructor.name}: options.adapter must be a function`);
     }
-    return adapter(content, filepath, this.options, this.getCacheHandle(content));
+    return adapter(content, filepath, this.options, getCacheHandle(this, content));
+  }
+  /**
+   * get url by invoke plugin
+   */
+  getUrlByInvoke(filepath){
+    let {exclude} = this.options;
+    if(exclude && this.stc.resource.match(filepath, exclude)){
+      return Promise.resolve(filepath);
+    }
+    return this.invokeSelf(filepath);
   }
   /**
    * parse html tag start
@@ -197,7 +180,7 @@ export default class CdnPlugin extends Plugin {
           let promises = values.map(item => {
             item = item.trim();
             let items = item.split(' ');
-            return this.invokeSelf(items[0].trim()).then(cdnUrl => {
+            return this.getUrlByInvoke(items[0].trim()).then(cdnUrl => {
               items[0] = cdnUrl;
               return items.join(' ');
             });
@@ -214,7 +197,7 @@ export default class CdnPlugin extends Plugin {
           return;
         }
 
-        return this.invokeSelf(value).then(cdnUrl => {
+        return this.getUrlByInvoke(value).then(cdnUrl => {
           this.stc.flkit.setHtmlAttrValue(attrs, attr, cdnUrl);
         });
       });
@@ -223,9 +206,9 @@ export default class CdnPlugin extends Plugin {
       let stylePromise;
       let value = this.stc.flkit.getHtmlAttrValue(attrs, 'style');
       if(value){
-       stylePromise = this.replaceCssResource(value).then(value => {
-         this.stc.flkit.setHtmlAttrValue(attrs, 'style', value);
-       });
+        stylePromise = this.replaceCssResource(value).then(value => {
+          this.stc.flkit.setHtmlAttrValue(attrs, 'style', value);
+        });
       }
       return Promise.all([Promise.all(promise), stylePromise]);
     });
