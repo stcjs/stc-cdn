@@ -175,6 +175,15 @@ export default class CdnPlugin extends Plugin {
           return;
         }
 
+        // ignore link tag when rel value is not stylesheet
+        // <link rel="alternate" href="/rss.html">
+        if(tagLowerCase === 'link'){
+          let rel = this.stc.flkit.getHtmlAttrValue(attrs, 'rel').toLowerCase();
+          if(rel !== 'stylesheet'){
+            return;
+          }
+        }
+
         // <img src="/static/img/404.jpg" srcset="/static/img/404.jpg 640w 1x, /static/img/404.jpg 2x" />
         if(attr === 'srcset'){
           let values = value.split(',');
