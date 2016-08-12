@@ -22,6 +22,7 @@
   "main": "lib/index.js",
   "dependencies": {
     "stc-helper": "1.x.x",
+    "stc-plugin": "1.x.x",
     "babel-runtime": "6.x.x"
   },
   "devDependencies": {
