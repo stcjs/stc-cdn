@@ -78,7 +78,7 @@ export default class CdnPlugin extends Plugin {
   async parseCss(){
     let tokens = await this.getAst();
     let property = '';
-    let promises = tokens.map(async (token) => {
+    let promises = tokens.map(token => {
       if(token.type === this.TokenType.CSS_PROPERTY){
         property = token.ext.value.toLowerCase();
       }
@@ -86,8 +86,11 @@ export default class CdnPlugin extends Plugin {
         return;
       }
       if(property){
-        token.ext.value = await this.replaceCssResource(token.ext.value, property);
+        let p = property;
         property = '';
+        return this.replaceCssResource(token.ext.value, p).then(val => {
+          token.ext.value = val;
+        });
       }
     });
     await Promise.all(promises);
@@ -145,7 +148,7 @@ export default class CdnPlugin extends Plugin {
     if(typeof adapter !== 'function'){
       this.fatal(`${this.contructor.name}: options.adapter must be a function`);
     }
-    return adapter(content, filepath, this.options, getCacheHandle(this, content));
+    return adapter(content, filepath, this.options, getCacheHandle(this, content), this);
   }
   /**
    * get url by invoke plugin
