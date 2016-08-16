@@ -20,7 +20,7 @@ export default class CdnPlugin extends Plugin {
    * run
    */
   async run(){
-    if(this.isTpl()){
+    if(this.isTpl() || this.prop('isTpl')){
       return this.parseHtml();
     }
     let extname = this.file.extname;
@@ -236,6 +236,15 @@ export default class CdnPlugin extends Plugin {
     let start = token.ext.start;
     if(start.ext.isExternal){
       token.ext.start = await this.parseHtmlTagStart(start);
+      return token;
+    }
+    if(start.ext.isTpl){
+      let filepath = md5(token.ext.content.value) + '.html';
+      let file = await this.addFile(filepath, token.ext.content.ext.tokens, true);
+      let ret = await this.invokeSelf(file, {
+        isTpl: true
+      });
+      token.ext.content.ext.tokens = ret.ast;
       return token;
     }
     let content = token.ext.content;
