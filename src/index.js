@@ -5,7 +5,8 @@ import {
   isRemoteUrl, 
   md5, 
   ResourceRegExp, 
-  htmlTagResourceAttrs
+  htmlTagResourceAttrs,
+  extend
 } from 'stc-helper';
 
 import {
@@ -76,7 +77,8 @@ export default class CdnPlugin extends Plugin {
    * parse css
    */
   async parseCss(){
-    let tokens = await this.getAst();
+    let sourceTokens = await this.getAst();
+    let tokens = this.options.notUpdateResource ? extend([], sourceTokens) : sourceTokens;
     let property = '';
     let promises = tokens.map(token => {
       if(token.type === this.TokenType.CSS_PROPERTY){
@@ -101,6 +103,9 @@ export default class CdnPlugin extends Plugin {
     }
     this.file.setAst(tokens);
     let content = await this.file.getContent('utf8');
+    if(this.options.notUpdateResource){
+      this.file.setAst(sourceTokens);
+    }
     let url = await this.getCdnUrl(content, this.file.path);
     return {url, ast: tokens};
   }
@@ -271,14 +276,16 @@ export default class CdnPlugin extends Plugin {
       this.setAst(data.ast);
       return;
     }
-    let extname = this.file.extname;
-    switch(extname){
-      case 'js':
-        this.setContent(data.content);
-        break;
-      case 'css':
-        this.setAst(data.ast);
-        break;
+    if(!this.options.notUpdateResource){
+      let extname = this.file.extname;
+      switch(extname){
+        case 'js':
+          this.setContent(data.content);
+          break;
+        case 'css':
+          this.setAst(data.ast);
+          break;
+      }
     }
   }
   /**
