@@ -18,6 +18,7 @@ export const getCacheInstance = instance => {
     return cacheInstances[cacheKey];
   }
   cacheInstances[cacheKey] = new instance.stc.cache({
+    path: instance.stc.config.cachePath,
     type: cacheKey
   });
   return cacheInstances[cacheKey];
