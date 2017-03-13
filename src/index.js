@@ -187,7 +187,7 @@ export default class CdnPlugin extends Plugin {
         // <link rel="alternate" href="/rss.html">
         if(tagLowerCase === 'link'){
           let rel = this.stc.flkit.getHtmlAttrValue(attrs, 'rel').toLowerCase();
-          if(rel !== 'stylesheet'){
+          if(rel !== 'stylesheet' && (this.options.rels || []).indexOf(rel) === -1){
             return;
           }
         }
