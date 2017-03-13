@@ -1,7 +1,7 @@
 {
   "name": "stc-cdn",
   "description": "upload resource to cdn for stc",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "author": {
     "name": "welefen",
     "email": "welefen@gmail.com"
