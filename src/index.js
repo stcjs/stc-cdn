@@ -153,7 +153,9 @@ export default class CdnPlugin extends Plugin {
     if(typeof adapter !== 'function'){
       this.fatal(`${this.contructor.name}: options.adapter must be a function`);
     }
-    return adapter(content, filepath, this.options, getCacheHandle(this, content), this);
+    return this.await(`getCdnUrl${filepath}`, () => {
+      return adapter(content, filepath, this.options, getCacheHandle(this, content), this);
+    })
   }
   /**
    * get url by invoke plugin
