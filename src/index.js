@@ -153,7 +153,7 @@ export default class CdnPlugin extends Plugin {
     if(typeof adapter !== 'function'){
       this.fatal(`${this.contructor.name}: options.adapter must be a function`);
     }
-    return this.await(`getCdnUrl${filepath}`, () => {
+    return this.await(`getCdnUrl${filepath}${JSON.stringify(this.options)}`, () => {
       return adapter(content, filepath, this.options, getCacheHandle(this, content), this);
     })
   }
