@@ -174,6 +174,9 @@ export default class CdnPlugin extends Plugin {
   parseHtmlTagStart(token){
     let list = [htmlTagResourceAttrs, this.options.tagAttrs || {}];
     let {attrs, tagLowerCase} = token.ext;
+    if (!attrs) {
+      throw new Error(`${token.value} is not valid token, file: ${this.file.path}`);
+    }
     let promises = list.map(item => {
       let tagAttrs = item[tagLowerCase] || [];
       if(!Array.isArray(tagAttrs)){
