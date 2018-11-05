@@ -216,7 +216,7 @@ export default class CdnPlugin extends Plugin {
         let extname = path.extname(value);
         // check link resource extname
         // ignore resource when has template syntax
-        if(!/^\.\w+$/.test(extname)){
+        if(!/^\.[\w#?]+$/.test(extname)){
           return;
         }
 
